@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rentals | Verified flats and plots</title>
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#search" aria-label="Rentals home">
+        <span class="brand-mark">R</span>
+        <span>Rentals</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a href="#listings">Listings</a>
+        <a href="#owner">For owners</a>
+        <a href="#pricing">Pricing</a>
+      </nav>
+      <div class="topbar-actions">
+        <button class="ghost-button" id="open-login" type="button">Sign in</button>
+        <button class="primary-button" id="open-owner" type="button">List property</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" id="search">
+        <div class="hero-media" aria-hidden="true"></div>
+        <div class="hero-content">
+          <p class="eyebrow">Verified rental search</p>
+          <h1>Rentals</h1>
+          <p class="hero-copy">
+            Find ready-to-visit flats and residential plots with rent, deposit, availability, and location context in one place.
+          </p>
+          <form class="search-panel" id="search-form">
+            <label>
+              <span>Locality</span>
+              <input id="locality" name="locality" type="search" placeholder="Koramangala, Indiranagar..." autocomplete="off" />
+            </label>
+            <label>
+              <span>City</span>
+              <input id="city" name="city" type="search" value="Bengaluru" autocomplete="off" />
+            </label>
+            <label>
+              <span>Type</span>
+              <select id="property-type" name="property_type">
+                <option value="">Any</option>
+                <option value="flat">Flat</option>
+                <option value="plot">Plot</option>
+              </select>
+            </label>
+            <label>
+              <span>Budget</span>
+              <select id="budget" name="budget">
+                <option value="">Any rent</option>
+                <option value="0-25000">Under ₹25k</option>
+                <option value="25000-50000">₹25k-₹50k</option>
+                <option value="50000-90000">₹50k-₹90k</option>
+                <option value="90000-">₹90k+</option>
+              </select>
+            </label>
+            <button class="primary-button search-button" type="submit">Search</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="summary-band" aria-label="Market summary">
+        <div>
+          <strong id="listing-count">0</strong>
+          <span>matching homes</span>
+        </div>
+        <div>
+          <strong>2 hr</strong>
+          <span>average owner response</span>
+        </div>
+        <div>
+          <strong id="median-rent">₹0</strong>
+          <span>median visible rent</span>
+        </div>
+      </section>
+
+      <section class="workspace" id="listings">
+        <aside class="filters" aria-label="Listing filters">
+          <div class="panel-heading">
+            <h2>Refine</h2>
+            <button class="text-button" id="clear-filters" type="button">Clear</button>
+          </div>
+          <label>
+            Bedrooms
+            <select id="bedrooms">
+              <option value="">Any</option>
+              <option value="1">1 BHK</option>
+              <option value="2">2 BHK</option>
+              <option value="3">3 BHK</option>
+              <option value="4">4+ BHK</option>
+            </select>
+          </label>
+          <label>
+            Minimum rent
+            <input id="min-rent" type="number" min="0" step="1000" placeholder="₹" />
+          </label>
+          <label>
+            Maximum rent
+            <input id="max-rent" type="number" min="0" step="1000" placeholder="₹" />
+          </label>
+          <fieldset>
+            <legend>Amenities</legend>
+            <label class="check"><input type="checkbox" value="parking" class="amenity" /> Parking</label>
+            <label class="check"><input type="checkbox" value="power backup" class="amenity" /> Power backup</label>
+            <label class="check"><input type="checkbox" value="security" class="amenity" /> Security</label>
+            <label class="check"><input type="checkbox" value="gym" class="amenity" /> Gym</label>
+          </fieldset>
+          <button class="secondary-button" id="nearby-button" type="button">Use nearby sample</button>
+        </aside>
+
+        <section class="results" aria-live="polite">
+          <div class="results-header">
+            <div>
+              <p class="eyebrow">Available now</p>
+              <h2>Verified listings</h2>
+            </div>
+            <select id="sort">
+              <option value="recent">Newest</option>
+              <option value="rent-asc">Rent: low to high</option>
+              <option value="rent-desc">Rent: high to low</option>
+              <option value="area-desc">Largest area</option>
+            </select>
+          </div>
+          <div class="status-line" id="status-line">Loading listings...</div>
+          <div class="listing-grid" id="listing-grid"></div>
+        </section>
+
+        <aside class="detail-panel" id="detail-panel" aria-live="polite">
+          <div class="empty-detail">
+            <span>Select a listing</span>
+            <p>Photos, rent details, amenities, location, and inquiry controls will appear here.</p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="owner-band" id="owner">
+        <div class="owner-copy">
+          <p class="eyebrow">Owner workspace</p>
+          <h2>Publish flats and plots with cleaner demand signals.</h2>
+          <p>
+            Owners can draft listings, publish inventory, review tenant inquiries, and compare local pricing samples exposed by the backend.
+          </p>
+        </div>
+        <form class="owner-card" id="owner-form">
+          <label>
+            Locality
+            <input id="pricing-locality" value="Koramangala" />
+          </label>
+          <label>
+            Property type
+            <select id="pricing-type">
+              <option value="flat">Flat</option>
+              <option value="plot">Plot</option>
+            </select>
+          </label>
+          <label>
+            Bedrooms
+            <input id="pricing-bedrooms" type="number" min="0" max="20" value="2" />
+          </label>
+          <button class="primary-button" type="submit">Estimate rent</button>
+          <output class="pricing-output" id="pricing-output">Run an estimate from local published listings.</output>
+        </form>
+      </section>
+    </main>
+
+    <dialog class="auth-dialog" id="auth-dialog">
+      <form method="dialog" class="dialog-shell">
+        <button class="close-button" aria-label="Close" value="cancel">×</button>
+        <h2>Sign in</h2>
+        <p>Use an existing tenant or owner account from the backend.</p>
+        <label>
+          Email
+          <input id="login-email" type="email" autocomplete="email" />
+        </label>
+        <label>
+          Password
+          <input id="login-password" type="password" autocomplete="current-password" />
+        </label>
+        <button class="primary-button" id="login-button" type="button">Sign in</button>
+        <output id="login-output"></output>
+      </form>
+    </dialog>
+
+    <script src="./config.js"></script>
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
