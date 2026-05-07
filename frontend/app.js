@@ -1,6 +1,8 @@
 const API_BASE =
   localStorage.getItem("rentals_api_base") || window.RENTALS_API_BASE || "http://127.0.0.1:8000";
 const tokenKey = "rentals_access_token";
+const interestedKey = "bigsocieties_interested";
+const unlockedKey = "bigsocieties_unlocked_contacts";
 
 const sampleListings = [
   {
@@ -110,6 +112,10 @@ const state = {
   selectedId: null,
   token: localStorage.getItem(tokenKey),
   user: null,
+  interested: readStoredIds(interestedKey),
+  unlocked: readStoredIds(unlockedKey),
+  authMode: "login",
+  page: "home",
 };
 
 const grid = document.querySelector("#listing-grid");
@@ -118,12 +124,17 @@ const statusLine = document.querySelector("#status-line");
 const countLabel = document.querySelector("#listing-count");
 const medianRentLabel = document.querySelector("#median-rent");
 
-document.querySelector("#search-form").addEventListener("submit", (event) => {
+function on(selector, eventName, handler) {
+  const element = document.querySelector(selector);
+  if (element) element.addEventListener(eventName, handler);
+}
+
+on("#search-form", "submit", (event) => {
   event.preventDefault();
   loadListings();
 });
 
-document.querySelector("#clear-filters").addEventListener("click", () => {
+on("#clear-filters", "click", () => {
   document.querySelector("#search-form").reset();
   document.querySelector("#city").value = "Bengaluru";
   document.querySelector("#bedrooms").value = "";
@@ -139,7 +150,7 @@ document.querySelectorAll("#bedrooms, #min-rent, #max-rent, #sort, .amenity").fo
   control.addEventListener("change", () => renderListings());
 });
 
-document.querySelector("#nearby-button").addEventListener("click", () => {
+on("#nearby-button", "click", () => {
   document.querySelector("#locality").value = "";
   document.querySelector("#city").value = "Bengaluru";
   state.listings = sampleListings.filter((listing) => listing.locality !== "Sarjapur");
@@ -147,18 +158,63 @@ document.querySelector("#nearby-button").addEventListener("click", () => {
   renderListings("Showing nearby sample inventory. Connect browser geolocation to call /properties/nearby.");
 });
 
-document.querySelector("#open-login").addEventListener("click", () => {
+on("#open-login", "click", () => {
   document.querySelector("#auth-dialog").showModal();
 });
 
-document.querySelector("#open-owner").addEventListener("click", () => {
-  document.querySelector("#owner").scrollIntoView({ behavior: "smooth" });
+on("#login-button", "click", login);
+on("#owner-form", "submit", estimatePricing);
+on("#tenant-nearby-search", "click", findNearbyListings);
+on("#clear-interested", "click", clearInterested);
+on("#tenant-profile-form", "submit", applyTenantProfile);
+on("#create-listing-form", "submit", createOwnerListing);
+on("#load-owner-listings", "click", loadOwnerListings);
+document.querySelectorAll("[data-auth-mode]").forEach((button) => {
+  button.addEventListener("click", () => setAuthMode(button.dataset.authMode));
+});
+document.querySelectorAll("[data-tenant-tab]").forEach((button) => {
+  button.addEventListener("click", () => activateTenantTab(button.dataset.tenantTab));
 });
 
-document.querySelector("#login-button").addEventListener("click", login);
-document.querySelector("#owner-form").addEventListener("submit", estimatePricing);
+if (grid) loadListings();
+restoreSession();
+renderInterestedListings();
+renderTenantAccount();
+renderOwnerListings([]);
 
-loadListings();
+function showPage(page) {
+  if (page === "tenant") {
+    window.location.href = "./tenant-dashboard.html";
+    return;
+  }
+  if (page === "owner") {
+    window.location.href = "./owner-dashboard.html";
+    return;
+  }
+  window.location.href = "./index.html";
+}
+
+async function restoreSession() {
+  if (!state.token) return;
+  try {
+    const data = await gqlRequest(
+      `query Me {
+        me {
+          email
+          role
+        }
+      }`,
+    );
+    state.user = data.me;
+    updateSignedInUi();
+    routeAfterAuth();
+  } catch (error) {
+    localStorage.removeItem(tokenKey);
+    state.token = null;
+    state.user = null;
+  }
+  renderTenantAccount();
+}
 
 async function gqlRequest(query, variables = {}, token = state.token) {
   const headers = { "Content-Type": "application/json" };
@@ -208,6 +264,7 @@ function normalizeListing(listing) {
 }
 
 async function loadListings() {
+  if (!grid) return;
   const filter = {};
   const locality = document.querySelector("#locality").value.trim();
   const city = document.querySelector("#city").value.trim();
@@ -223,7 +280,7 @@ async function loadListings() {
     if (max) filter.maxRent = Number(max);
   }
 
-  statusLine.textContent = "Searching published listings...";
+  if (statusLine) statusLine.textContent = "Searching published listings...";
   try {
     const data = await gqlRequest(
       `query Listings($filter: ListingFilterInput) {
@@ -276,6 +333,7 @@ async function loadListings() {
 }
 
 function renderListings(message) {
+  if (!grid) return;
   const visible = filteredListings();
   const selectedStillVisible = visible.some((listing) => listing.id === state.selectedId);
   if (!selectedStillVisible) state.selectedId = visible[0]?.id || null;
@@ -306,9 +364,9 @@ function renderListings(message) {
     grid.append(card);
   });
 
-  countLabel.textContent = String(visible.length);
-  medianRentLabel.textContent = formatMoney(median(visible.map((item) => item.rent)), "INR");
-  statusLine.textContent = message || `${visible.length} listing${visible.length === 1 ? "" : "s"} match your filters.`;
+  if (countLabel) countLabel.textContent = String(visible.length);
+  if (medianRentLabel) medianRentLabel.textContent = formatMoney(median(visible.map((item) => item.rent)), "INR");
+  if (statusLine) statusLine.textContent = message || `${visible.length} listing${visible.length === 1 ? "" : "s"} match your filters.`;
   renderDetail(visible.find((listing) => listing.id === state.selectedId));
 }
 
@@ -337,6 +395,7 @@ function filteredListings() {
 }
 
 function renderDetail(listing) {
+  if (!detailPanel) return;
   if (!listing) {
     detailPanel.innerHTML = `
       <div class="empty-detail">
@@ -365,6 +424,10 @@ function renderDetail(listing) {
         ${detailFact("Furnishing", humanize(listing.furnishing || "not_applicable"))}
       </div>
       <div class="amenity-row">${listing.amenities.map((item) => `<span class="pill">${humanize(item)}</span>`).join("")}</div>
+      <div class="detail-actions">
+        <button class="secondary-button" type="button" id="save-interest">${isInterested(listing.id) ? "Saved" : "Save interest"}</button>
+        <button class="ghost-button" type="button" id="unlock-contact">${isUnlocked(listing.id) ? "Owner: +91 98765 43210" : "Unlock owner number ₹29"}</button>
+      </div>
       <form class="inquiry-form" data-property-id="${listing.id}">
         <label>
           Message owner
@@ -376,6 +439,8 @@ function renderDetail(listing) {
     </div>
   `;
 
+  detailPanel.querySelector("#save-interest").addEventListener("click", () => saveInterest(listing.id));
+  detailPanel.querySelector("#unlock-contact").addEventListener("click", () => unlockContact(listing.id));
   detailPanel.querySelector(".inquiry-form").addEventListener("submit", sendInquiry);
 }
 
@@ -418,9 +483,25 @@ async function login() {
   const email = document.querySelector("#login-email").value.trim();
   const password = document.querySelector("#login-password").value;
 
+  if (!email || !password) {
+    output.textContent = "Email and password are required.";
+    return;
+  }
+
   try {
+    const isRegister = state.authMode === "register";
     const data = await gqlRequest(
-      `mutation Login($input: LoginInput!) {
+      isRegister
+        ? `mutation Register($input: RegisterInput!) {
+        register(input: $input) {
+          accessToken
+          user {
+            email
+            role
+          }
+        }
+      }`
+        : `mutation Login($input: LoginInput!) {
         login(input: $input) {
           accessToken
           user {
@@ -429,18 +510,385 @@ async function login() {
           }
         }
       }`,
-      { input: { email, password } },
+      {
+        input: isRegister
+          ? {
+              email,
+              password,
+              role: document.querySelector("#register-role").value,
+              phone: document.querySelector("#register-phone").value.trim() || null,
+            }
+          : { email, password },
+      },
       null,
     );
-    const payload = data.login;
+    const payload = isRegister ? data.register : data.login;
     state.token = payload.accessToken;
     state.user = payload.user;
     localStorage.setItem(tokenKey, state.token);
-    output.textContent = `Signed in as ${payload.user.role}.`;
-    document.querySelector("#open-login").textContent = payload.user.email;
+    output.textContent = `${isRegister ? "Registered" : "Signed in"} as ${payload.user.role}.`;
+    updateSignedInUi();
+    renderTenantAccount();
+    document.querySelector("#auth-dialog").close();
+    routeAfterAuth();
   } catch (error) {
-    output.textContent = "Sign in failed. Check credentials and backend availability.";
+    output.textContent = `${state.authMode === "register" ? "Register" : "Sign in"} failed. Check credentials, duplicate phone/email, and backend availability.`;
   }
+}
+
+function setAuthMode(mode) {
+  state.authMode = mode;
+  document.querySelectorAll("[data-auth-mode]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.authMode === mode);
+  });
+  document.querySelector(".dialog-shell").classList.toggle("register-mode", mode === "register");
+  document.querySelector("#login-button").textContent = mode === "register" ? "Create account" : "Sign in";
+  document.querySelector("#login-output").textContent = "";
+}
+
+function updateSignedInUi() {
+  const loginButton = document.querySelector("#open-login");
+  if (loginButton) loginButton.textContent = state.user?.email || "Sign in";
+}
+
+function routeAfterAuth() {
+  if (!state.user) return;
+  const currentPage = document.body?.dataset.page;
+  if (state.user.role === "owner" || state.user.role === "admin") {
+    if (currentPage === "owner") {
+      loadOwnerListings();
+      return;
+    }
+    showPage("owner");
+    return;
+  }
+  if (currentPage === "tenant") {
+    activateTenantTab("nearby");
+    return;
+  }
+  showPage("tenant");
+}
+
+function activateTenantTab(tabName) {
+  document.querySelectorAll("[data-tenant-tab]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.tenantTab === tabName);
+  });
+  document.querySelectorAll(".tenant-tab-panel").forEach((panel) => {
+    panel.classList.toggle("active", panel.id === `tenant-tab-${tabName}`);
+  });
+}
+
+function readStoredIds(key) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || "[]");
+    return Array.isArray(value) ? value : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function storeIds(key, ids) {
+  localStorage.setItem(key, JSON.stringify([...new Set(ids)]));
+}
+
+function isInterested(id) {
+  return state.interested.includes(id);
+}
+
+function isUnlocked(id) {
+  return state.unlocked.includes(id);
+}
+
+function saveInterest(id) {
+  if (!isInterested(id)) {
+    state.interested.push(id);
+    storeIds(interestedKey, state.interested);
+  }
+  renderListings();
+  renderInterestedListings();
+  activateTenantTab("interested");
+  document.querySelector("#tenant-dashboard")?.scrollIntoView({ behavior: "smooth" });
+}
+
+function clearInterested() {
+  state.interested = [];
+  storeIds(interestedKey, state.interested);
+  renderInterestedListings();
+  renderListings();
+}
+
+function unlockContact(id) {
+  if (!isUnlocked(id)) {
+    state.unlocked.push(id);
+    storeIds(unlockedKey, state.unlocked);
+  }
+  if (!isInterested(id)) {
+    state.interested.push(id);
+    storeIds(interestedKey, state.interested);
+  }
+  renderListings();
+  renderInterestedListings();
+}
+
+function renderInterestedListings() {
+  const list = document.querySelector("#interested-list");
+  if (!list) return;
+  const listings = [...state.listings, ...sampleListings].filter((listing) => isInterested(listing.id));
+  const uniqueListings = listings.filter((listing, index, array) => array.findIndex((item) => item.id === listing.id) === index);
+
+  const unlockCount = document.querySelector("#unlock-count");
+  const unlockSpend = document.querySelector("#unlock-spend");
+  if (unlockCount) unlockCount.textContent = String(state.unlocked.length);
+  if (unlockSpend) unlockSpend.textContent = formatMoney(state.unlocked.length * 29, "INR");
+
+  if (!uniqueListings.length) {
+    list.innerHTML = `
+      <div class="empty-inline">
+        <strong>No interested listings yet</strong>
+        <span>Save homes from listing details and compare them here before unlocking owner contact.</span>
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = uniqueListings
+    .map(
+      (listing) => `
+        <article class="interest-item">
+          <img src="${listing.images?.[0] || fallbackImage(listing)}" alt="${listing.title}" />
+          <div>
+            <h4>${listing.title}</h4>
+            <p>${listing.locality}, ${listing.city} · ${formatMoney(listing.rent, listing.currency)}</p>
+            <div class="interest-actions">
+              <button class="secondary-button" type="button" data-focus-listing="${listing.id}">View</button>
+              <button class="ghost-button" type="button" data-unlock-listing="${listing.id}">
+                ${isUnlocked(listing.id) ? "+91 98765 43210" : "Unlock ₹29"}
+              </button>
+            </div>
+          </div>
+        </article>
+      `,
+    )
+    .join("");
+
+  list.querySelectorAll("[data-focus-listing]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.selectedId = button.dataset.focusListing;
+      renderListings();
+      document.querySelector("#listings").scrollIntoView({ behavior: "smooth" });
+    });
+  });
+  list.querySelectorAll("[data-unlock-listing]").forEach((button) => {
+    button.addEventListener("click", () => unlockContact(button.dataset.unlockListing));
+  });
+}
+
+async function findNearbyListings() {
+  const status = document.querySelector("#tenant-nearby-status");
+  const grid = document.querySelector("#tenant-nearby-grid");
+  status.textContent = "Checking nearby low-rent listings...";
+
+  const renderNearby = (items, message) => {
+    status.textContent = message;
+    grid.innerHTML = items
+      .slice(0, 4)
+      .map(
+        (listing) => `
+          <button class="mini-listing-card" type="button" data-nearby-listing="${listing.id}">
+            <img src="${listing.images?.[0] || fallbackImage(listing)}" alt="${listing.title}" />
+            <span>
+              <strong>${listing.title}</strong>
+              <small>${listing.locality} · ${formatMoney(listing.rent, listing.currency)}</small>
+            </span>
+          </button>
+        `,
+      )
+      .join("");
+    grid.querySelectorAll("[data-nearby-listing]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.selectedId = button.dataset.nearbyListing;
+        renderListings();
+        document.querySelector("#listings").scrollIntoView({ behavior: "smooth" });
+      });
+    });
+  };
+
+  const cheapListings = [...state.listings].sort((a, b) => a.rent - b.rent);
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      () => renderNearby(cheapListings.length ? cheapListings : sampleListings, "Showing the cheapest listings near your search area."),
+      () => renderNearby(sampleListings.sort((a, b) => a.rent - b.rent), "Location was not shared. Showing cheapest sample inventory."),
+      { timeout: 6000 },
+    );
+  } else {
+    renderNearby(sampleListings.sort((a, b) => a.rent - b.rent), "Geolocation is unavailable. Showing cheapest sample inventory.");
+  }
+}
+
+function applyTenantProfile(event) {
+  event.preventDefault();
+  document.querySelector("#city").value = document.querySelector("#tenant-city").value.trim() || "Bengaluru";
+  document.querySelector("#locality").value = document.querySelector("#tenant-locality").value.trim();
+  document.querySelector("#max-rent").value = document.querySelector("#tenant-max-rent").value;
+  loadListings();
+  document.querySelector("#listings").scrollIntoView({ behavior: "smooth" });
+}
+
+function renderTenantAccount() {
+  const title = document.querySelector("#tenant-account-title");
+  const facts = document.querySelector("#tenant-account-facts");
+  if (!title || !facts) return;
+  title.textContent = state.user ? state.user.email : "Guest tenant";
+  facts.innerHTML = `
+    ${detailFact("Role", state.user?.role ? humanize(state.user.role) : "Guest")}
+    ${detailFact("Saved homes", state.interested.length)}
+    ${detailFact("Unlocked contacts", state.unlocked.length)}
+    ${detailFact("Backend", API_BASE)}
+  `;
+}
+
+async function createOwnerListing(event) {
+  event.preventDefault();
+  const output = document.querySelector("#owner-create-output");
+
+  if (!state.token) {
+    output.textContent = "Sign in as an owner before creating listings.";
+    document.querySelector("#auth-dialog").showModal();
+    return;
+  }
+
+  const images = document
+    .querySelector("#owner-images")
+    .value.split("\n")
+    .map((url) => url.trim())
+    .filter(Boolean)
+    .map((url, index) => ({ url, sortOrder: index }));
+  const furnishing = document.querySelector("#owner-furnishing").value;
+  const availableFrom = document.querySelector("#owner-available-from").value;
+  const input = {
+    title: document.querySelector("#owner-title").value.trim(),
+    description: document.querySelector("#owner-description").value.trim(),
+    propertyType: document.querySelector("#owner-property-type").value,
+    rent: Number(document.querySelector("#owner-rent").value),
+    deposit: Number(document.querySelector("#owner-deposit").value),
+    currency: "INR",
+    locality: document.querySelector("#owner-locality").value.trim(),
+    city: document.querySelector("#owner-city").value.trim(),
+    addressLine1: document.querySelector("#owner-address").value.trim(),
+    latitude: Number(document.querySelector("#owner-latitude").value),
+    longitude: Number(document.querySelector("#owner-longitude").value),
+    bedrooms: numberOrNull("#owner-bedrooms"),
+    bathrooms: numberOrNull("#owner-bathrooms"),
+    areaSqft: numberOrNull("#owner-area"),
+    furnishing: furnishing || null,
+    amenities: document
+      .querySelector("#owner-amenities")
+      .value.split(",")
+      .map((item) => item.trim())
+      .filter(Boolean),
+    attributes: {
+      facing: document.querySelector("#owner-facing").value.trim(),
+      parkingType: document.querySelector("#owner-parking-type").value.trim(),
+      societyRules: document.querySelector("#owner-rules").value.trim(),
+    },
+    images,
+    availableFrom: availableFrom || null,
+  };
+
+  output.textContent = "Creating listing draft...";
+  try {
+    const data = await gqlRequest(
+      `mutation CreateListing($input: ListingInput!) {
+        createListing(input: $input) {
+          id
+          title
+          status
+          rent
+          city
+          locality
+          updatedAt
+          images { url }
+        }
+      }`,
+      { input },
+    );
+    output.textContent = `Draft created: ${data.createListing.title}`;
+    await loadOwnerListings();
+  } catch (error) {
+    output.textContent = "Could not create listing. Confirm the signed-in account has owner role.";
+  }
+}
+
+async function loadOwnerListings() {
+  const panel = document.querySelector("#owner-listings");
+  if (!panel) return;
+  if (!state.token) {
+    panel.innerHTML = `<div class="empty-inline"><strong>Owner sign-in required</strong><span>Sign in to see drafts, published listings, and inquiries.</span></div>`;
+    return;
+  }
+
+  panel.innerHTML = `<div class="status-line">Loading owner listings...</div>`;
+  try {
+    const data = await gqlRequest(
+      `query OwnerListings {
+        ownerListings {
+          id
+          title
+          status
+          rent
+          city
+          locality
+          updatedAt
+          images { url }
+        }
+      }`,
+    );
+    renderOwnerListings(data.ownerListings.map(normalizeOwnerListing));
+  } catch (error) {
+    panel.innerHTML = `<div class="empty-inline"><strong>Could not load owner listings</strong><span>Use an owner account to manage inventory.</span></div>`;
+  }
+}
+
+function normalizeOwnerListing(listing) {
+  return {
+    id: listing.id,
+    title: listing.title,
+    status: listing.status,
+    rent: listing.rent,
+    city: listing.city,
+    locality: listing.locality,
+    updated_at: listing.updatedAt,
+    images: (listing.images || []).map((image) => image.url),
+    currency: "INR",
+  };
+}
+
+function renderOwnerListings(listings) {
+  const panel = document.querySelector("#owner-listings");
+  if (!panel) return;
+  if (!listings.length) {
+    panel.innerHTML = `<div class="empty-inline"><strong>No owner listings loaded</strong><span>Create a draft or refresh after signing in.</span></div>`;
+    return;
+  }
+  panel.innerHTML = listings
+    .map(
+      (listing) => `
+        <article class="owner-listing-row">
+          <img src="${listing.images?.[0] || fallbackImage(listing)}" alt="${listing.title}" />
+          <div>
+            <h4>${listing.title}</h4>
+            <p>${listing.locality}, ${listing.city} · ${formatMoney(listing.rent, listing.currency)}</p>
+            <span class="status-badge">${humanize(listing.status)}</span>
+          </div>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+function numberOrNull(selector) {
+  const value = document.querySelector(selector).value;
+  return value === "" ? null : Number(value);
 }
 
 async function estimatePricing(event) {

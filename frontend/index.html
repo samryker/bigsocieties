@@ -3,33 +3,34 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Rentals | Verified flats and plots</title>
+    <title>bigsocieties.com | Verified flats and plots</title>
     <link rel="preconnect" href="https://images.unsplash.com" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body>
+  <body data-page="home">
     <header class="topbar">
-      <a class="brand" href="#search" aria-label="Rentals home">
-        <span class="brand-mark">R</span>
-        <span>Rentals</span>
+      <a class="brand" href="#search" aria-label="bigsocieties.com home">
+        <span class="brand-mark">B</span>
+        <span>bigsocieties.com</span>
       </a>
       <nav class="nav-links" aria-label="Primary navigation">
-        <a href="#listings">Listings</a>
-        <a href="#owner">For owners</a>
+        <a href="./index.html#listings">Listings</a>
+        <a href="./tenant-dashboard.html">Tenants</a>
+        <a href="./owner-dashboard.html">Owners</a>
         <a href="#pricing">Pricing</a>
       </nav>
       <div class="topbar-actions">
         <button class="ghost-button" id="open-login" type="button">Sign in</button>
-        <button class="primary-button" id="open-owner" type="button">List property</button>
+        <a class="primary-button link-button" href="./owner-dashboard.html">List property</a>
       </div>
     </header>
 
     <main>
-      <section class="hero" id="search">
+      <section class="hero page-surface home-surface" id="search">
         <div class="hero-media" aria-hidden="true"></div>
         <div class="hero-content">
           <p class="eyebrow">Verified rental search</p>
-          <h1>Rentals</h1>
+          <h1>bigsocieties.com</h1>
           <p class="hero-copy">
             Find ready-to-visit flats and residential plots with rent, deposit, availability, and location context in one place.
           </p>
@@ -65,7 +66,7 @@
         </div>
       </section>
 
-      <section class="summary-band" aria-label="Market summary">
+      <section class="summary-band page-surface home-surface tenant-surface" aria-label="Market summary">
         <div>
           <strong id="listing-count">0</strong>
           <span>matching homes</span>
@@ -80,7 +81,7 @@
         </div>
       </section>
 
-      <section class="workspace" id="listings">
+      <section class="workspace page-surface home-surface tenant-surface" id="listings">
         <aside class="filters" aria-label="Listing filters">
           <div class="panel-heading">
             <h2>Refine</h2>
@@ -139,7 +140,7 @@
         </aside>
       </section>
 
-      <section class="owner-band" id="owner">
+      <section class="owner-band page-surface home-surface owner-surface" id="owner">
         <div class="owner-copy">
           <p class="eyebrow">Owner workspace</p>
           <h2>Publish flats and plots with cleaner demand signals.</h2>
@@ -172,8 +173,14 @@
     <dialog class="auth-dialog" id="auth-dialog">
       <form method="dialog" class="dialog-shell">
         <button class="close-button" aria-label="Close" value="cancel">×</button>
-        <h2>Sign in</h2>
-        <p>Use an existing tenant or owner account from the backend.</p>
+        <div>
+          <h2>Account access</h2>
+          <p>Sign in or create a tenant/owner account.</p>
+        </div>
+        <div class="segmented-control auth-tabs" role="tablist" aria-label="Authentication mode">
+          <button class="segment active" id="auth-login-tab" type="button" data-auth-mode="login">Sign in</button>
+          <button class="segment" type="button" data-auth-mode="register">Register</button>
+        </div>
         <label>
           Email
           <input id="login-email" type="email" autocomplete="email" />
@@ -182,6 +189,19 @@
           Password
           <input id="login-password" type="password" autocomplete="current-password" />
         </label>
+        <div class="register-only">
+          <label>
+            Role
+            <select id="register-role">
+              <option value="tenant">Tenant</option>
+              <option value="owner">Owner</option>
+            </select>
+          </label>
+          <label>
+            Phone
+            <input id="register-phone" type="tel" autocomplete="tel" placeholder="Optional" />
+          </label>
+        </div>
         <button class="primary-button" id="login-button" type="button">Sign in</button>
         <output id="login-output"></output>
       </form>

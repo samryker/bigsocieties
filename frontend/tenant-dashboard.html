@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tenant dashboard | bigsocieties.com</title>
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body data-page="tenant">
+    <header class="topbar">
+      <a class="brand" href="./index.html" aria-label="bigsocieties.com home">
+        <span class="brand-mark">B</span>
+        <span>bigsocieties.com</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a href="./index.html#listings">Listings</a>
+        <a class="active" href="./tenant-dashboard.html">Tenants</a>
+        <a href="./owner-dashboard.html">Owners</a>
+      </nav>
+      <div class="topbar-actions">
+        <button class="ghost-button" id="open-login" type="button">Sign in</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="dashboard-shell dashboard-page-hero" id="tenant-dashboard">
+        <div class="dashboard-heading">
+          <div>
+            <p class="eyebrow">Tenant dashboard</p>
+            <h2>Find the cheapest verified listings before everyone else.</h2>
+          </div>
+          <div class="segmented-control" role="tablist" aria-label="Tenant dashboard sections">
+            <button class="segment active" type="button" data-tenant-tab="nearby">Nearby</button>
+            <button class="segment" type="button" data-tenant-tab="interested">Interested</button>
+            <button class="segment" type="button" data-tenant-tab="account">Account</button>
+          </div>
+        </div>
+
+        <div class="dashboard-grid tenant-tab-panel active" id="tenant-tab-nearby">
+          <section class="dashboard-panel wide-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Nearby search</p>
+                <h3>Low-rent homes around your current area</h3>
+              </div>
+              <button class="secondary-button" id="tenant-nearby-search" type="button">Use my location</button>
+            </div>
+            <form class="dashboard-form compact-search" id="search-form">
+              <label>
+                Locality
+                <input id="locality" type="search" placeholder="Koramangala, HSR..." />
+              </label>
+              <label>
+                City
+                <input id="city" value="Bengaluru" />
+              </label>
+              <label>
+                Type
+                <select id="property-type">
+                  <option value="">Any</option>
+                  <option value="flat">Flat</option>
+                  <option value="plot">Plot</option>
+                </select>
+              </label>
+              <label>
+                Budget
+                <select id="budget">
+                  <option value="">Any rent</option>
+                  <option value="0-25000">Under ₹25k</option>
+                  <option value="25000-50000">₹25k-₹50k</option>
+                  <option value="50000-90000">₹50k-₹90k</option>
+                </select>
+              </label>
+              <button class="primary-button" type="submit">Search</button>
+            </form>
+            <div class="status-line" id="status-line">Loading listings...</div>
+            <div class="status-line" id="tenant-nearby-status">Search nearby or use the filters.</div>
+            <div class="mini-listing-grid" id="tenant-nearby-grid"></div>
+          </section>
+
+          <aside class="dashboard-panel">
+            <p class="eyebrow">Price advantage</p>
+            <h3>Pay only when a listing is worth contacting.</h3>
+            <div class="unlock-card">
+              <strong>₹29</strong>
+              <span>owner number unlock</span>
+            </div>
+            <p class="muted-copy">Save homes while browsing, compare them here, then unlock owner contact only for the one you actually want.</p>
+          </aside>
+        </div>
+
+        <div class="dashboard-grid tenant-tab-panel" id="tenant-tab-interested">
+          <section class="dashboard-panel wide-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Interested listings</p>
+                <h3>Shortlisted homes and owner contact unlocks</h3>
+              </div>
+              <button class="text-button" id="clear-interested" type="button">Clear list</button>
+            </div>
+            <div class="interested-list" id="interested-list"></div>
+          </section>
+          <aside class="dashboard-panel">
+            <p class="eyebrow">Contact wallet</p>
+            <h3>Keep contact spend tiny.</h3>
+            <div class="wallet-row">
+              <span>Unlocked numbers</span>
+              <strong id="unlock-count">0</strong>
+            </div>
+            <div class="wallet-row">
+              <span>Total contact spend</span>
+              <strong id="unlock-spend">₹0</strong>
+            </div>
+          </aside>
+        </div>
+
+        <div class="dashboard-grid tenant-tab-panel" id="tenant-tab-account">
+          <section class="dashboard-panel">
+            <p class="eyebrow">Account</p>
+            <h3 id="tenant-account-title">Guest tenant</h3>
+            <div class="account-facts" id="tenant-account-facts"></div>
+          </section>
+          <section class="dashboard-panel wide-panel">
+            <p class="eyebrow">Search preferences</p>
+            <h3>Tenant profile</h3>
+            <form class="dashboard-form" id="tenant-profile-form">
+              <label>
+                Preferred city
+                <input id="tenant-city" value="Bengaluru" />
+              </label>
+              <label>
+                Target locality
+                <input id="tenant-locality" placeholder="HSR Layout, Whitefield..." />
+              </label>
+              <label>
+                Maximum rent
+                <input id="tenant-max-rent" type="number" min="0" step="1000" placeholder="₹" />
+              </label>
+              <button class="secondary-button" type="submit">Apply to search</button>
+            </form>
+          </section>
+        </div>
+      </section>
+
+      <section class="workspace dashboard-listing-workspace" id="listings">
+        <aside class="filters" aria-label="Listing filters">
+          <div class="panel-heading">
+            <h2>Refine</h2>
+            <button class="text-button" id="clear-filters" type="button">Clear</button>
+          </div>
+          <label>
+            Bedrooms
+            <select id="bedrooms">
+              <option value="">Any</option>
+              <option value="1">1 BHK</option>
+              <option value="2">2 BHK</option>
+              <option value="3">3 BHK</option>
+              <option value="4">4+ BHK</option>
+            </select>
+          </label>
+          <label>
+            Minimum rent
+            <input id="min-rent" type="number" min="0" step="1000" placeholder="₹" />
+          </label>
+          <label>
+            Maximum rent
+            <input id="max-rent" type="number" min="0" step="1000" placeholder="₹" />
+          </label>
+          <button class="secondary-button" id="nearby-button" type="button">Use nearby sample</button>
+        </aside>
+        <section class="results" aria-live="polite">
+          <div class="results-header">
+            <div>
+              <p class="eyebrow">Tenant search</p>
+              <h2>Matching listings</h2>
+            </div>
+            <select id="sort">
+              <option value="recent">Newest</option>
+              <option value="rent-asc">Rent: low to high</option>
+              <option value="rent-desc">Rent: high to low</option>
+              <option value="area-desc">Largest area</option>
+            </select>
+          </div>
+          <div class="listing-grid" id="listing-grid"></div>
+        </section>
+        <aside class="detail-panel" id="detail-panel" aria-live="polite">
+          <div class="empty-detail">
+            <span>Select a listing</span>
+            <p>Save interest, unlock owner contact, or send inquiry from here.</p>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <dialog class="auth-dialog" id="auth-dialog">
+      <form method="dialog" class="dialog-shell">
+        <button class="close-button" aria-label="Close" value="cancel">×</button>
+        <div>
+          <h2>Account access</h2>
+          <p>Sign in or create a tenant/owner account.</p>
+        </div>
+        <div class="segmented-control auth-tabs" role="tablist" aria-label="Authentication mode">
+          <button class="segment active" type="button" data-auth-mode="login">Sign in</button>
+          <button class="segment" type="button" data-auth-mode="register">Register</button>
+        </div>
+        <label>Email <input id="login-email" type="email" autocomplete="email" /></label>
+        <label>Password <input id="login-password" type="password" autocomplete="current-password" /></label>
+        <div class="register-only">
+          <label>Role <select id="register-role"><option value="tenant">Tenant</option><option value="owner">Owner</option></select></label>
+          <label>Phone <input id="register-phone" type="tel" autocomplete="tel" placeholder="Optional" /></label>
+        </div>
+        <button class="primary-button" id="login-button" type="button">Sign in</button>
+        <output id="login-output"></output>
+      </form>
+    </dialog>
+
+    <script src="./config.js"></script>
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>

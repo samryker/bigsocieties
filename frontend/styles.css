@@ -88,6 +88,17 @@ button {
   font-size: 0.95rem;
 }
 
+.nav-links a.active {
+  color: var(--forest);
+  font-weight: 850;
+}
+
+body[data-page="home"] .page-surface:not(.home-surface),
+body[data-page="tenant"] .page-surface:not(.tenant-surface),
+body[data-page="owner"] .page-surface:not(.owner-surface) {
+  display: none;
+}
+
 .topbar-actions {
   display: flex;
   gap: 10px;
@@ -104,10 +115,14 @@ button {
 }
 
 .primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: #fff;
   background: var(--forest);
   padding: 0 18px;
   box-shadow: 0 10px 24px rgba(22, 66, 55, 0.22);
+  text-decoration: none;
 }
 
 .secondary-button {
@@ -483,6 +498,258 @@ legend {
   resize: vertical;
 }
 
+.detail-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.dashboard-shell {
+  display: grid;
+  gap: 24px;
+  padding: clamp(24px, 5vw, 64px);
+  background: #fbfcf9;
+  border-top: 1px solid var(--line);
+}
+
+.dashboard-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.dashboard-heading h2 {
+  max-width: 760px;
+  margin: 0;
+}
+
+.segmented-control {
+  display: inline-grid;
+  grid-template-columns: repeat(3, minmax(96px, 1fr));
+  gap: 4px;
+  padding: 4px;
+  background: #e9efea;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.segment {
+  min-height: 38px;
+  padding: 0 12px;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  font-weight: 800;
+}
+
+.segment.active {
+  color: var(--forest);
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(24, 36, 33, 0.08);
+}
+
+.dashboard-grid,
+.owner-dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 24px;
+  align-items: start;
+}
+
+.tenant-tab-panel {
+  display: none;
+}
+
+.tenant-tab-panel.active {
+  display: grid;
+}
+
+.dashboard-panel {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 10px 34px rgba(24, 36, 33, 0.07);
+}
+
+.dashboard-panel h3,
+.dashboard-panel h4 {
+  margin: 0;
+}
+
+.wide-panel {
+  min-width: 0;
+}
+
+.muted-copy {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.unlock-card {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  color: #fff;
+  background: var(--forest);
+  border-radius: 8px;
+}
+
+.unlock-card strong {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.wallet-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.wallet-row:last-child {
+  border-bottom: 0;
+}
+
+.mini-listing-grid,
+.interested-list,
+.owner-listings {
+  display: grid;
+  gap: 12px;
+}
+
+.mini-listing-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mini-listing-card,
+.interest-item,
+.owner-listing-row {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  color: inherit;
+  background: #f8faf7;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  text-align: left;
+}
+
+.mini-listing-card img,
+.interest-item img,
+.owner-listing-row img {
+  width: 96px;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  background: #d7ded7;
+  border-radius: 8px;
+}
+
+.mini-listing-card span,
+.interest-item div,
+.owner-listing-row div {
+  min-width: 0;
+}
+
+.mini-listing-card strong,
+.interest-item h4,
+.owner-listing-row h4 {
+  display: block;
+  overflow: hidden;
+  margin-bottom: 5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-listing-card small,
+.interest-item p,
+.owner-listing-row p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.interest-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.empty-inline {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  color: var(--muted);
+  background: var(--wash);
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+}
+
+.empty-inline strong {
+  color: var(--ink);
+}
+
+.account-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dashboard-form,
+.listing-editor {
+  display: grid;
+  gap: 14px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.listing-editor textarea {
+  min-height: 96px;
+  padding-top: 12px;
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.form-actions output {
+  color: var(--muted);
+}
+
+.draft-badge,
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 28px;
+  padding: 0 10px;
+  color: var(--blue);
+  background: #e9f1f5;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.owner-list-panel {
+  position: sticky;
+  top: 94px;
+}
+
 .owner-band {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
@@ -537,6 +804,19 @@ legend {
   padding: 24px;
 }
 
+.auth-tabs {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.register-only {
+  display: none;
+  gap: 14px;
+}
+
+.dialog-shell.register-mode .register-only {
+  display: grid;
+}
+
 .dialog-shell h2 {
   margin-bottom: 0;
 }
@@ -568,6 +848,14 @@ legend {
     position: static;
     grid-column: 1 / -1;
   }
+
+  .owner-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .owner-list-panel {
+    position: static;
+  }
 }
 
 @media (max-width: 860px) {
@@ -594,7 +882,23 @@ legend {
   }
 
   .listing-grid,
-  .summary-band {
+  .summary-band,
+  .dashboard-grid,
+  .mini-listing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .segmented-control {
+    width: 100%;
+  }
+
+  .form-grid,
+  .account-facts {
     grid-template-columns: 1fr;
   }
 }
@@ -634,5 +938,22 @@ legend {
 
   .fact-list {
     grid-template-columns: 1fr;
+  }
+
+  .detail-actions,
+  .segmented-control {
+    grid-template-columns: 1fr;
+  }
+
+  .mini-listing-card,
+  .interest-item,
+  .owner-listing-row {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .mini-listing-card img,
+  .interest-item img,
+  .owner-listing-row img {
+    width: 72px;
   }
 }
